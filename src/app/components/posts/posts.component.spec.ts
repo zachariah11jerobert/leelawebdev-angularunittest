@@ -1,13 +1,24 @@
 import { Post } from "src/app/models/Post"
 import { PostsComponent } from "./posts.component";
 import { of } from "rxjs/internal/observable/of";
-import { TestBed } from "@angular/core/testing";
+import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { PostService } from "src/app/services/Post/post.service";
+import { Component, Input } from "@angular/core";
+import { By } from "@angular/platform-browser";
 
 describe('posts Component', () => {
     let POSTS: Post[];
     let component: PostsComponent;
     let mockPostService: any;
+    let fixture: ComponentFixture<PostsComponent>;
+
+    @Component({
+        selector:'app-post',
+        template:'<div></div>',
+    })
+    class FakePostComponent{
+        @Input() post!: Post;
+    }
 
     beforeEach(() => {
         POSTS = [
@@ -30,8 +41,8 @@ describe('posts Component', () => {
         mockPostService = jasmine.createSpyObj(['getPosts', 'deletePost']);
 
         TestBed.configureTestingModule({
+            declarations: [PostsComponent,FakePostComponent],
             providers: [
-                PostsComponent,
                 {
                     provide: PostService,
                     useValue: mockPostService,
@@ -39,7 +50,22 @@ describe('posts Component', () => {
             ],
         });
 
-        component = TestBed.inject(PostsComponent);
+        fixture = TestBed.createComponent(PostsComponent);
+        component = fixture.componentInstance;
+    });
+
+    it('should set posts from the service directly', () => {
+        mockPostService.getPosts.and.returnValue(of(POSTS));
+        fixture.detectChanges();
+        expect(component.posts.length).toBe(3);
+    });
+
+    it('should create one post child Element for each post',()=>{
+        mockPostService.getPosts.and.returnValue(of(POSTS));
+        fixture.detectChanges();
+        const debugElement=fixture. debugElement;
+        const postsElement=debugElement.queryAll(By.css('.posts'));
+        expect(postsElement.length).toBe(POSTS.length);
     });
 
     describe('delete', () => {
