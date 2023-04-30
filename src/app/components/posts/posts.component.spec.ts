@@ -5,20 +5,13 @@ import { ComponentFixture, TestBed } from "@angular/core/testing";
 import { PostService } from "src/app/services/Post/post.service";
 import { Component, Input } from "@angular/core";
 import { By } from "@angular/platform-browser";
+import { PostComponent } from "../post/post.component";
 
 describe('posts Component', () => {
     let POSTS: Post[];
     let component: PostsComponent;
     let mockPostService: any;
     let fixture: ComponentFixture<PostsComponent>;
-
-    @Component({
-        selector:'app-post',
-        template:'<div></div>',
-    })
-    class FakePostComponent{
-        @Input() post!: Post;
-    }
 
     beforeEach(() => {
         POSTS = [
@@ -41,7 +34,7 @@ describe('posts Component', () => {
         mockPostService = jasmine.createSpyObj(['getPosts', 'deletePost']);
 
         TestBed.configureTestingModule({
-            declarations: [PostsComponent,FakePostComponent],
+            declarations: [PostsComponent, PostComponent],
             providers: [
                 {
                     provide: PostService,
@@ -54,17 +47,41 @@ describe('posts Component', () => {
         component = fixture.componentInstance;
     });
 
+    it('should create exact same number of Post Component with Posts', () => {
+        mockPostService.getPosts.and.returnValue(of(POSTS));
+        //ngOnInit()
+        fixture.detectChanges();
+        const PostComponentDEs = fixture.debugElement.queryAll(
+            By.directive(PostComponent)
+        );
+
+        expect(PostComponentDEs.length).toEqual(POSTS.length);
+    });
+
+    it('should check whether exact post is sending to POstComponenet', () => {
+        mockPostService.getPosts.and.returnValue(of(POSTS));
+        fixture.detectChanges();
+        const PostComponentDEs = fixture.debugElement.queryAll(
+            By.directive(PostComponent)
+        );
+
+        for (let i = 0; i < PostComponentDEs.length; i++) {
+            let postComponentInstance = PostComponentDEs[i].componentInstance as PostComponent;
+            expect(postComponentInstance.post.title).toEqual(POSTS[i].title);
+        }
+    });
+
     it('should set posts from the service directly', () => {
         mockPostService.getPosts.and.returnValue(of(POSTS));
         fixture.detectChanges();
         expect(component.posts.length).toBe(3);
     });
 
-    it('should create one post child Element for each post',()=>{
+    it('should create one post child Element for each post', () => {
         mockPostService.getPosts.and.returnValue(of(POSTS));
         fixture.detectChanges();
-        const debugElement=fixture. debugElement;
-        const postsElement=debugElement.queryAll(By.css('.posts'));
+        const debugElement = fixture.debugElement;
+        const postsElement = debugElement.queryAll(By.css('.posts'));
         expect(postsElement.length).toBe(POSTS.length);
     });
 
@@ -80,7 +97,6 @@ describe('posts Component', () => {
         });
 
         it('should delete the actual selected Post in Posts', () => {
-
             component.delete(POSTS[1]);
 
             for (let post of component.posts) {
